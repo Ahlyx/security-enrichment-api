@@ -29,8 +29,9 @@ async def get_ip_reputation(address: str, request: Request) -> IPResponse:
 
     result = await aggregate_ip(address)
 
-    successful_sources = [s for s in result.sources if s.success]
-    if len(successful_sources) > 0:
-        set_cached("ip", address, result.model_dump(mode="json"))
+    successful_sources = len([s for s in result.sources if s.success])
+    total_sources = len(result.sources)
+    print(f"DEBUG: successful_sources={successful_sources} total={total_sources}")
+    set_cached("ip", address, result.model_dump(mode="json"), successful_sources, total_sources)
 
     return result
