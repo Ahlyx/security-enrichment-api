@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Union
 from app.models.shared import BaseResponse
 
 class GeoLocation(BaseModel):
@@ -22,9 +22,9 @@ class VirusTotalData(BaseModel):
     malicious_votes: Optional[int] = None
     harmless_votes: Optional[int] = None
     suspicious_votes: Optional[int] = None
-    last_analysis_date: Optional[str] = None
+    last_analysis_date: Optional[Union[str, int]] = None
     associated_malware: list[str] = []
-
+    
 class IPResponse(BaseResponse):
     ip: str
     geolocation: Optional[GeoLocation] = None
