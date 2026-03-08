@@ -3,11 +3,9 @@ from app.rate_limit import limiter
 from app.models.url import URLResponse
 from app.services.aggregator import aggregate_url
 from app.cache import get_cached, set_cached
+from app.utils.validators import is_valid_url
 
 router = APIRouter()
-
-def is_valid_url(url: str) -> bool:
-    return url.startswith("http://") or url.startswith("https://")
 
 @router.get("/url", response_model=URLResponse)
 @limiter.limit("10/minute")

@@ -51,3 +51,6 @@ def get_hash_type(hash_value: str) -> str | None:
     if re.match(r'^[a-f0-9]{64}$', hash_value):
         return "sha256"
     return None
+
+def is_valid_url(url: str) -> bool:
+    return url.startswith("http://") or url.startswith("https://")
