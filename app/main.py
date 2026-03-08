@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import ip
+from app.routers import ip, domain
 from app.cache import init_cache
 from app.rate_limit import limiter, rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -30,6 +30,7 @@ app.add_middleware(
 )
 
 app.include_router(ip.router, prefix="/api/v1", tags=["IP Reputation"])
+app.include_router(domain.router, prefix="/api/v1", tags=["Domain Reputation"])
 
 @app.get("/")
 async def root():
