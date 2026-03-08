@@ -5,6 +5,8 @@ class Settings(BaseSettings):
     virustotal_api_key: str = ""
     ipinfo_api_key: str = ""
     otx_api_key: str = ""
+    google_safe_browsing_api_key: str = ""
+    urlscan_api_key: str = ""
     
     cache_ttl_seconds: int = 3600  # 1 hour
     rate_limit: str = "30/minute"
