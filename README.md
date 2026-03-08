@@ -25,6 +25,7 @@ A threat intelligence aggregation API that enriches IP addresses with data from 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/v1/ip/{address}` | IP reputation and threat intelligence |
+| GET | `/api/v1/domain/{name}` | Domain reputation, WHOIS, and DNS |
 | GET | `/health` | Health check |
 | GET | `/docs` | Interactive API documentation |
 
