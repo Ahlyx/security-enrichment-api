@@ -1,31 +1,35 @@
 # Security Enrichment API
 
-A threat intelligence aggregation API that enriches IP addresses with data from multiple sources into a single normalized JSON response.
+A threat intelligence aggregation API that enriches IPs, domains, URLs, and file hashes with data from multiple sources into a single normalized JSON response.
 
 ## Features
 
-- Aggregates threat intelligence from AbuseIPDB, VirusTotal, IPinfo, and AlienVault OTX
+- Aggregates threat intelligence from 8 sources: AbuseIPDB, VirusTotal, IPinfo, AlienVault OTX, Google Safe Browsing, URLScan.io, MalwareBazaar, and CIRCL HashLookup
 - Parallel requests to all sources for fast response times
 - SQLite caching with tiered TTL based on source success rate
 - Rate limiting per IP address
-- Input validation and private IP rejection
+- Input validation — private IPs rejected, bogon detection, hash type auto-detection
 - Graceful degradation — partial results returned if a source fails
+- Frontend dashboard with tabbed search, live color-coded results, and query history
 
 ## Tech Stack
 
-- **Python** / **FastAPI**
+- **Python 3.12** / **FastAPI**
 - **httpx** for async HTTP requests
 - **asyncio.gather** for parallel API calls
-- **Pydantic** for response schema validation
+- **Pydantic** / **pydantic-settings** for response schema validation and config
 - **slowapi** for rate limiting
 - **SQLite** for caching
+- **dnspython** for DNS resolution
 
 ## Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/v1/ip/{address}` | IP reputation and threat intelligence |
-| GET | `/api/v1/domain/{name}` | Domain reputation, WHOIS, and DNS |
+| GET | `/api/v1/ip/{address}` | IP reputation, geolocation, and threat intelligence |
+| GET | `/api/v1/domain/{name}` | Domain WHOIS, DNS records, SSL/TLS, and reputation |
+| GET | `/api/v1/url?url=...` | URL safety check across Safe Browsing, URLScan, and VirusTotal |
+| GET | `/api/v1/hash/{hash}` | File hash lookup — MD5, SHA1, or SHA256 |
 | GET | `/health` | Health check |
 | GET | `/docs` | Interactive API documentation |
 
@@ -66,8 +70,10 @@ A threat intelligence aggregation API that enriches IP addresses with data from 
 ## Setup
 
 ### Prerequisites
+
 - Python 3.12+
-- API keys for: AbuseIPDB, VirusTotal, IPinfo, AlienVault OTX
+- API keys for: AbuseIPDB, VirusTotal, IPinfo, AlienVault OTX, Google Safe Browsing, URLScan.io, MalwareBazaar
+- CIRCL HashLookup requires no API key
 
 ### Installation
 ```bash
@@ -89,6 +95,9 @@ ABUSEIPDB_API_KEY=your_key_here
 VIRUSTOTAL_API_KEY=your_key_here
 IPINFO_API_KEY=your_key_here
 OTX_API_KEY=your_key_here
+GOOGLE_SAFE_BROWSING_API_KEY=your_key_here
+URLSCAN_API_KEY=your_key_here
+MALWAREBAZAAR_API_KEY=your_key_here
 ```
 
 ### Running
@@ -96,7 +105,7 @@ OTX_API_KEY=your_key_here
 uvicorn app.main:app --reload
 ```
 
-Visit `http://127.0.0.1:8000/docs` for interactive API documentation.
+Visit `http://127.0.0.1:8000` for the frontend dashboard or `http://127.0.0.1:8000/docs` for interactive API documentation.
 
 ## Architecture
 ```
