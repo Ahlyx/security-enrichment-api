@@ -163,7 +163,7 @@ async def aggregate_hash(hash_value: str) -> HashResponse:
         malwarebazaar and malwarebazaar.signature is not None,
     ])
 
-    is_known_good = bool(circl and circl.known_good)
+    is_known_good = bool(circl and circl.known_good and not is_malicious)
 
     return HashResponse(
         query=hash_value,
