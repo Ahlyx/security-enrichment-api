@@ -1,17 +1,19 @@
 import asyncio
 from app.services.abuseipdb import fetch_abuseipdb
 from app.services.ipinfo import fetch_ipinfo
-from app.services.virustotal import fetch_virustotal, fetch_virustotal_domain, fetch_virustotal_url
+from app.services.virustotal import fetch_virustotal, fetch_virustotal_domain, fetch_virustotal_url, fetch_virustotal_hash
 from app.services.otx import fetch_otx, fetch_otx_domain
 from app.services.whois_service import fetch_whois
 from app.services.dns_service import fetch_dns
 from app.services.ssl_service import fetch_ssl
 from app.services.safebrowsing import fetch_safe_browsing
 from app.services.urlscan import fetch_urlscan
+from app.services.malwarebazaar import fetch_malwarebazaar
 from app.models.ip import IPResponse, GeoLocation, AbuseData, VirusTotalData
 from app.models.domain import DomainResponse, WhoisData, DNSData, SSLData, DomainVirusTotalData
 from app.models.url import URLResponse, SafeBrowsingData, URLScanData, URLVirusTotalData
-from app.utils.validators import is_bogon_ip
+from app.models.hash import HashResponse, HashVirusTotalData, MalwareBazaarData
+from app.utils.validators import is_bogon_ip, get_hash_type
 from app.utils.normalize import utc_now
 
 async def aggregate_ip(ip: str) -> IPResponse:
@@ -129,5 +131,39 @@ async def aggregate_url(url: str) -> URLResponse:
         safe_browsing=safe_browsing,
         urlscan=urlscan,
         virustotal=virustotal,
+        is_malicious=is_malicious,
+    )
+
+async def aggregate_hash(hash_value: str) -> HashResponse:
+    vt_data, vt_meta = None, None
+    mb_data, mb_meta = None, None
+
+    (
+        (vt_data, vt_meta),
+        (mb_data, mb_meta),
+    ) = await asyncio.gather(
+        fetch_virustotal_hash(hash_value),
+        fetch_malwarebazaar(hash_value),
+        return_exceptions=False
+    )
+
+    sources = [vt_meta, mb_meta]
+    virustotal = HashVirusTotalData(**vt_data) if vt_data else None
+    malwarebazaar = MalwareBazaarData(**mb_data) if mb_data else None
+
+    is_malicious = any([
+        virustotal and virustotal.malicious_votes and virustotal.malicious_votes > 0,
+        malwarebazaar and malwarebazaar.signature is not None,
+    ])
+
+    return HashResponse(
+        query=hash_value,
+        query_type="hash",
+        timestamp=utc_now(),
+        sources=sources,
+        hash_value=hash_value,
+        hash_type=get_hash_type(hash_value),
+        virustotal=virustotal,
+        malwarebazaar=malwarebazaar,
         is_malicious=is_malicious,
     )
