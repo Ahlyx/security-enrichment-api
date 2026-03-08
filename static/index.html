@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Enrichment API</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<header>
+    <div class="header-inner">
+    <div class="logo">
+        <span class="logo-bracket">[</span>
+        <span class="logo-text">SEC</span>
+        <span class="logo-accent">ENRICH</span>
+        <span class="logo-bracket">]</span>
+        <span class="made-by">made by <a href="https://github.com/Ahlyx" target="_blank">@Ahlyx</a></span>
+    </div>
+        <div class="header-meta">
+            <span class="version-tag">v0.1.0</span>
+            <span class="status-dot" id="statusDot"></span>
+            <span class="status-text" id="statusText">checking...</span>
+        </div>
+    </div>
+</header>
+
+    <main>
+        <section class="hero">
+            <h1>Threat Intelligence<br><span class="accent">Enrichment API</span></h1>
+            <p class="hero-sub">Aggregate threat data from AbuseIPDB, VirusTotal, IPinfo, AlienVault OTX, Google Safe Browsing, URLScan, and MalwareBazaar into a single normalized response.</p>
+        </section>
+
+        <section class="search-section">
+            <div class="tabs">
+                <button class="tab active" data-type="ip">IP</button>
+                <button class="tab" data-type="domain">Domain</button>
+                <button class="tab" data-type="url">URL</button>
+                <button class="tab" data-type="hash">Hash</button>
+            </div>
+
+            <div class="search-bar">
+                <span class="search-prefix" id="searchPrefix">ip://</span>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Enter an IP address..."
+                    autocomplete="off"
+                    spellcheck="false"
+                />
+                <button id="searchBtn">SCAN</button>
+            </div>
+
+            <div class="example-queries">
+                <span class="example-label">try:</span>
+                <button class="example" data-value="8.8.8.8" data-type="ip">8.8.8.8</button>
+                <button class="example" data-value="185.220.101.1" data-type="ip">185.220.101.1</button>
+                <button class="example" data-value="google.com" data-type="domain">google.com</button>
+                <button class="example" data-value="db349b97c37d22f5ea1d1841e3c89eb4" data-type="hash">WannaCry hash</button>
+            </div>
+        </section>
+
+        <section class="results-section" id="resultsSection" style="display:none">
+            <div class="results-header">
+                <span class="results-label">SCAN RESULTS</span>
+                <span class="results-query" id="resultsQuery"></span>
+                <span class="results-time" id="resultsTime"></span>
+            </div>
+            <div class="loading" id="loading">
+                <div class="loading-bar"></div>
+                <span>scanning...</span>
+            </div>
+            <div id="resultsContent"></div>
+        </section>
+
+        <section class="history-section" id="historySection">
+            <div class="history-header">
+                <span class="history-label">RECENT QUERIES</span>
+                <button class="clear-btn" id="clearHistory">CLEAR</button>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="history-empty">No recent queries</div>
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

@@ -9,10 +9,11 @@ from app.services.ssl_service import fetch_ssl
 from app.services.safebrowsing import fetch_safe_browsing
 from app.services.urlscan import fetch_urlscan
 from app.services.malwarebazaar import fetch_malwarebazaar
+from app.services.circl import fetch_circl
 from app.models.ip import IPResponse, GeoLocation, AbuseData, VirusTotalData
 from app.models.domain import DomainResponse, WhoisData, DNSData, SSLData, DomainVirusTotalData
 from app.models.url import URLResponse, SafeBrowsingData, URLScanData, URLVirusTotalData
-from app.models.hash import HashResponse, HashVirusTotalData, MalwareBazaarData
+from app.models.hash import HashResponse, HashVirusTotalData, MalwareBazaarData, CIRCLData
 from app.utils.validators import is_bogon_ip, get_hash_type
 from app.utils.normalize import utc_now
 
@@ -137,24 +138,32 @@ async def aggregate_url(url: str) -> URLResponse:
 async def aggregate_hash(hash_value: str) -> HashResponse:
     vt_data, vt_meta = None, None
     mb_data, mb_meta = None, None
+    circl_data, circl_meta = None, None
+
+    hash_type = get_hash_type(hash_value)
 
     (
         (vt_data, vt_meta),
         (mb_data, mb_meta),
+        (circl_data, circl_meta),
     ) = await asyncio.gather(
         fetch_virustotal_hash(hash_value),
         fetch_malwarebazaar(hash_value),
+        fetch_circl(hash_value, hash_type),
         return_exceptions=False
     )
 
-    sources = [vt_meta, mb_meta]
+    sources = [vt_meta, mb_meta, circl_meta]
     virustotal = HashVirusTotalData(**vt_data) if vt_data else None
     malwarebazaar = MalwareBazaarData(**mb_data) if mb_data else None
+    circl = CIRCLData(**circl_data) if circl_data else None
 
     is_malicious = any([
         virustotal and virustotal.malicious_votes and virustotal.malicious_votes > 0,
         malwarebazaar and malwarebazaar.signature is not None,
     ])
+
+    is_known_good = bool(circl and circl.known_good)
 
     return HashResponse(
         query=hash_value,
@@ -162,8 +171,10 @@ async def aggregate_hash(hash_value: str) -> HashResponse:
         timestamp=utc_now(),
         sources=sources,
         hash_value=hash_value,
-        hash_type=get_hash_type(hash_value),
+        hash_type=hash_type,
         virustotal=virustotal,
         malwarebazaar=malwarebazaar,
+        circl=circl,
         is_malicious=is_malicious,
+        is_known_good=is_known_good,
     )

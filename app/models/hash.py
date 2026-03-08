@@ -21,9 +21,18 @@ class MalwareBazaarData(BaseModel):
     first_seen: Optional[str] = None
     last_seen: Optional[str] = None
 
+class CIRCLData(BaseModel):
+    found: Optional[bool] = None
+    file_name: Optional[str] = None
+    file_size: Optional[str] = None
+    trust_level: Optional[int] = None
+    known_good: Optional[bool] = None
+
 class HashResponse(BaseResponse):
     hash_value: str
     hash_type: Optional[str] = None
     virustotal: Optional[HashVirusTotalData] = None
     malwarebazaar: Optional[MalwareBazaarData] = None
+    circl: Optional[CIRCLData] = None
     is_malicious: Optional[bool] = None
+    is_known_good: Optional[bool] = None

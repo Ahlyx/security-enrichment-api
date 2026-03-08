@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from app.routers import ip, domain, url, hash
 from app.cache import init_cache
 from app.rate_limit import limiter, rate_limit_exceeded_handler
@@ -29,6 +31,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 app.include_router(ip.router, prefix="/api/v1", tags=["IP Reputation"])
 app.include_router(domain.router, prefix="/api/v1", tags=["Domain Reputation"])
 app.include_router(url.router, prefix="/api/v1", tags=["URL Reputation"])
@@ -36,7 +40,7 @@ app.include_router(hash.router, prefix="/api/v1", tags=["Hash Reputation"])
 
 @app.get("/")
 async def root():
-    return {"message": "Security Enrichment API", "version": "0.1.0", "docs": "/docs"}
+    return FileResponse("static/index.html")
 
 @app.get("/health")
 async def health():
