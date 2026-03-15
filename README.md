@@ -7,16 +7,18 @@ A threat intelligence aggregation API that enriches IPs, domains, URLs, and file
 ---
 
 ## Repository Structure
-
 ```
 security-enrichment-api/
 ├── scanner-python/   # FastAPI implementation
 │   ├── app/
-│   ├── static/       # Frontend dashboard
 │   └── tests/
-└── scanner-go/       # Go implementation (6.5 MB static binary)
-    ├── cmd/server/
-    └── internal/
+├── scanner-go/       # Go implementation (6.5 MB static binary)
+│   ├── cmd/server/
+│   └── internal/
+├── static/           # Frontend dashboard (shared)
+├── CLAUDE.md
+├── README.md
+└── LICENSE
 ```
 
 ---
