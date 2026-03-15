@@ -1,6 +1,19 @@
+# Environment
 .env
+
+# Python
 venv/
 __pycache__/
 *.pyc
-.DS_Store
+*.pyo
 cache.db
+
+# Claude Code
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go
+scanner-go/.env
