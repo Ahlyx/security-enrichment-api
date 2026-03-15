@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/Ahlyx/scanner-go/internal/cache"
@@ -33,30 +32,43 @@ func HandleURL(cfg *config.Config, c *cache.Cache) http.HandlerFunc {
 			return
 		}
 
-		var (
-			sbData   *models.SafeBrowsingData
-			sbMeta   models.SourceMetadata
-			usData   *models.URLScanData
-			usMeta   models.SourceMetadata
-			vtData   *models.URLVTData
-			vtMeta   models.SourceMetadata
-		)
+		type sbResult struct {
+			data *models.SafeBrowsingData
+			meta models.SourceMetadata
+		}
+		type usResult struct {
+			data *models.URLScanData
+			meta models.SourceMetadata
+		}
+		type vtResult struct {
+			data *models.URLVTData
+			meta models.SourceMetadata
+		}
 
-		var wg sync.WaitGroup
-		wg.Add(3)
+		sbCh := make(chan sbResult, 1)
+		usCh := make(chan usResult, 1)
+		vtCh := make(chan vtResult, 1)
+
 		go func() {
-			defer wg.Done()
-			sbData, sbMeta = services.FetchSafeBrowsing(cfg.GoogleSafeBrowsingKey, targetURL)
+			d, m := services.FetchSafeBrowsing(cfg.GoogleSafeBrowsingKey, targetURL)
+			sbCh <- sbResult{d, m}
 		}()
 		go func() {
-			defer wg.Done()
-			usData, usMeta = services.FetchURLScan(cfg.URLScanKey, targetURL)
+			d, m := services.FetchURLScan(cfg.URLScanKey, targetURL)
+			usCh <- usResult{d, m}
 		}()
 		go func() {
-			defer wg.Done()
-			vtData, vtMeta = services.FetchVirusTotalURL(cfg.VirusTotalKey, targetURL)
+			d, m := services.FetchVirusTotalURL(cfg.VirusTotalKey, targetURL)
+			vtCh <- vtResult{d, m}
 		}()
-		wg.Wait()
+
+		sbRes := <-sbCh
+		usRes := <-usCh
+		vtRes := <-vtCh
+
+		sbData, sbMeta := sbRes.data, sbRes.meta
+		usData, usMeta := usRes.data, usRes.meta
+		vtData, vtMeta := vtRes.data, vtRes.meta
 
 		// Derive is_malicious from all sources (mirrors Python aggregator logic).
 		isMalicious := false

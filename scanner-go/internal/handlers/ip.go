@@ -54,9 +54,12 @@ func HandleIP(cfg *config.Config, c *cache.Cache) http.HandlerFunc {
 
 		isBogon := validators.IsBogonIP(ip)
 
+		// Derive is_tor directly from the AbuseIPDB result without an
+		// intermediate pointer copy that can silently become nil.
 		var isTor *bool
-		if abuseData != nil {
-			isTor = abuseData.IsTor
+		if abuseData != nil && abuseData.IsTor != nil {
+			v := *abuseData.IsTor
+			isTor = &v
 		}
 
 		resp := &models.IPResponse{

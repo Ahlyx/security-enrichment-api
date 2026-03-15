@@ -60,9 +60,11 @@ func HandleHash(cfg *config.Config, c *cache.Cache) http.HandlerFunc {
 		wg.Wait()
 
 		// Derive is_malicious and is_known_good (mirrors Python aggregator).
+		// Nil-guard vtData.MaliciousVotes before dereferencing; assign the
+		// comparison result directly so the bool value is always set.
 		isMalicious := false
-		if vtData != nil && vtData.MaliciousVotes != nil && *vtData.MaliciousVotes > 0 {
-			isMalicious = true
+		if vtData != nil && vtData.MaliciousVotes != nil {
+			isMalicious = *vtData.MaliciousVotes > 0
 		}
 		if mbData != nil && mbData.Signature != nil {
 			isMalicious = true
