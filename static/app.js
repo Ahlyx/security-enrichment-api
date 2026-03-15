@@ -1,4 +1,6 @@
-const API_BASE = '/api/v1';
+const API_BASE = window.location.hostname === 'localhost'
+    ? '/api/v1'
+    : 'https://security-enrichment-api.onrender.com/api/v1';
 
 const placeholders = {
     ip: 'Enter an IP address... e.g. 8.8.8.8',
@@ -20,7 +22,10 @@ let history = [];
 // Health check
 async function checkHealth() {
     try {
-        const res = await fetch('/health');
+        const healthURL = window.location.hostname === 'localhost'
+            ? '/health'
+            : 'https://security-enrichment-api.onrender.com/health';
+        const res = await fetch(healthURL);
         const data = await res.json();
         if (data.status === 'ok') {
             document.getElementById('statusDot').className = 'status-dot online';
@@ -101,8 +106,15 @@ async function performSearch(value, type) {
 
         const res = await fetch(endpoint);
         const data = await res.json();
+
+        if (!res.ok) {
+            const detail = data.detail ?? `HTTP ${res.status}`;
+            throw new Error(typeof detail === 'string' ? detail : JSON.stringify(detail));
+        }
+
         const elapsed = ((Date.now() - start) / 1000).toFixed(2);
 
+        document.title = `[${value}] — SEC ENRICH`;
         resultsTime.textContent = `${elapsed}s`;
         loading.style.display = 'none';
 
@@ -360,6 +372,7 @@ function addToHistory(value, type, data) {
     });
 
     if (history.length > 15) history.pop();
+    localStorage.setItem('searchHistory', JSON.stringify(history));
     renderHistory();
 }
 
@@ -375,14 +388,27 @@ function renderHistory() {
     history.forEach(item => {
         const el = document.createElement('div');
         el.className = 'history-item';
-        el.innerHTML = `
-            <span class="history-type">${item.type.toUpperCase()}</span>
-            <span class="history-value">${item.value}</span>
-            <span class="history-verdict ${item.isMalicious ? 'malicious' : 'clean'}">
-                ${item.isMalicious ? '⚠ THREAT' : '✓ CLEAN'}
-            </span>
-            <span class="history-time">${item.timestamp}</span>
-        `;
+
+        const typeEl = document.createElement('span');
+        typeEl.className = 'history-type';
+        typeEl.textContent = item.type.toUpperCase();
+
+        const valueEl = document.createElement('span');
+        valueEl.className = 'history-value';
+        valueEl.textContent = item.value;
+
+        const verdictEl = document.createElement('span');
+        verdictEl.className = `history-verdict ${item.isMalicious ? 'malicious' : 'clean'}`;
+        verdictEl.textContent = item.isMalicious ? '⚠ THREAT' : '✓ CLEAN';
+
+        const timeEl = document.createElement('span');
+        timeEl.className = 'history-time';
+        timeEl.textContent = item.timestamp;
+
+        el.appendChild(typeEl);
+        el.appendChild(valueEl);
+        el.appendChild(verdictEl);
+        el.appendChild(timeEl);
         el.addEventListener('click', () => {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelector(`.tab[data-type="${item.type}"]`).classList.add('active');
@@ -398,7 +424,25 @@ function renderHistory() {
 
 document.getElementById('clearHistory').addEventListener('click', () => {
     history = [];
+    localStorage.removeItem('searchHistory');
     renderHistory();
 });
+
+// Keyboard shortcut: pressing / focuses the search input when it isn't already focused.
+document.addEventListener('keydown', e => {
+    if (e.key === '/' && document.activeElement !== document.getElementById('searchInput')) {
+        e.preventDefault();
+        document.getElementById('searchInput').focus();
+    }
+});
+
+// Load persisted history before first render.
+try {
+    const saved = localStorage.getItem('searchHistory');
+    if (saved) history = JSON.parse(saved);
+} catch {
+    history = [];
+}
+renderHistory();
 
 checkHealth();
