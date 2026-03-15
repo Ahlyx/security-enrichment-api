@@ -68,10 +68,11 @@ type WhoisData struct {
 }
 
 type DNSData struct {
-	ARecords   []string `json:"a_records"`
-	MXRecords  []string `json:"mx_records"`
-	NSRecords  []string `json:"ns_records"`
-	TXTRecords []string `json:"txt_records"`
+	ARecords    []string `json:"a_records"`
+	AAAARecords []string `json:"aaaa_records"`
+	MXRecords   []string `json:"mx_records"`
+	NSRecords   []string `json:"ns_records"`
+	TXTRecords  []string `json:"txt_records"`
 }
 
 type SSLData struct {

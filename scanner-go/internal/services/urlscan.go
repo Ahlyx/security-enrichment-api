@@ -69,33 +69,40 @@ func FetchURLScan(apiKey, targetURL string) (*models.URLScanData, models.SourceM
 		return nil, meta
 	}
 
-	// Wait for scan to complete — mirrors Python's asyncio.sleep(15).
-	time.Sleep(15 * time.Second)
+	// Poll for result — check every 2 seconds, give up after 8 seconds.
+	deadline := time.Now().Add(8 * time.Second)
+	var resultBody []byte
+	for {
+		time.Sleep(2 * time.Second)
 
-	// Fetch result
-	resultReq, err := http.NewRequest(http.MethodGet,
-		fmt.Sprintf("%s%s/", urlscanResultURL, submitData.UUID), nil)
-	if err != nil {
-		meta.Error = ptr(err.Error())
-		return nil, meta
-	}
+		resultReq, err := http.NewRequest(http.MethodGet,
+			fmt.Sprintf("%s%s/", urlscanResultURL, submitData.UUID), nil)
+		if err != nil {
+			meta.Error = ptr(err.Error())
+			return nil, meta
+		}
 
-	resultResp, err := httpClient.Do(resultReq)
-	if err != nil {
-		meta.Error = ptr(err.Error())
-		return nil, meta
-	}
-	defer resultResp.Body.Close()
+		resultResp, err := httpClient.Do(resultReq)
+		if err != nil {
+			meta.Error = ptr(err.Error())
+			return nil, meta
+		}
 
-	if resultResp.StatusCode != http.StatusOK {
-		meta.Error = ptr(fmt.Sprintf("HTTP %d", resultResp.StatusCode))
-		return nil, meta
-	}
+		if resultResp.StatusCode == http.StatusOK {
+			resultBody, err = io.ReadAll(resultResp.Body)
+			resultResp.Body.Close()
+			if err != nil {
+				meta.Error = ptr(err.Error())
+				return nil, meta
+			}
+			break
+		}
+		resultResp.Body.Close()
 
-	resultBody, err := io.ReadAll(resultResp.Body)
-	if err != nil {
-		meta.Error = ptr(err.Error())
-		return nil, meta
+		if time.Now().After(deadline) {
+			meta.Error = ptr("scan result not ready within 8 seconds")
+			return nil, meta
+		}
 	}
 
 	var raw struct {

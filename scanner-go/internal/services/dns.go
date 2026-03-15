@@ -8,6 +8,7 @@ import (
 	"github.com/Ahlyx/scanner-go/internal/models"
 )
 
+
 // resolver uses Google's public DNS with a 5s timeout, matching the Python
 // dnspython resolver.timeout = 5 / resolver.lifetime = 5 configuration.
 var dnsResolver = &net.Resolver{
@@ -25,6 +26,7 @@ func FetchDNS(domain string) (*models.DNSData, models.SourceMetadata) {
 	defer cancel()
 
 	aRecords := []string{}
+	aaaaRecords := []string{}
 	mxRecords := []string{}
 	nsRecords := []string{}
 	txtRecords := []string{}
@@ -32,7 +34,13 @@ func FetchDNS(domain string) (*models.DNSData, models.SourceMetadata) {
 	// Each record type is fetched independently; individual failures don't
 	// abort the overall DNS lookup (mirrors Python's per-type try/except).
 	if addrs, err := dnsResolver.LookupHost(ctx, domain); err == nil {
-		aRecords = addrs
+		for _, addr := range addrs {
+			if net.ParseIP(addr).To4() != nil {
+				aRecords = append(aRecords, addr)
+			} else {
+				aaaaRecords = append(aaaaRecords, addr)
+			}
+		}
 	}
 
 	if mxs, err := dnsResolver.LookupMX(ctx, domain); err == nil {
@@ -53,9 +61,10 @@ func FetchDNS(domain string) (*models.DNSData, models.SourceMetadata) {
 
 	meta.Success = true
 	return &models.DNSData{
-		ARecords:   aRecords,
-		MXRecords:  mxRecords,
-		NSRecords:  nsRecords,
-		TXTRecords: txtRecords,
+		ARecords:    aRecords,
+		AAAARecords: aaaaRecords,
+		MXRecords:   mxRecords,
+		NSRecords:   nsRecords,
+		TXTRecords:  txtRecords,
 	}, meta
 }
