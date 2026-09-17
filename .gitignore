@@ -17,3 +17,6 @@ Thumbs.db
 
 # Go
 scanner-go/.env
+scanner-go/server
+scanner-go/server.exe
+/target/
