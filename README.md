@@ -1,5 +1,9 @@
 # Security Enrichment API
 
+> **Legacy / superseded.** This repository is preserved as a public portfolio
+> and implementation history. The maintained public service and documentation
+> now live in [Ahlyx-Labs](https://github.com/Ahlyx/Ahlyx-Labs).
+
 A threat intelligence aggregation API that enriches IPs, domains, URLs, and file hashes with data from multiple sources into a single normalized JSON response. Available in two implementations — Python (FastAPI) and Go.
 
 > Built with Claude Code (Sonnet 4.6 + Opus 4.6) — [Ahlyx](https://github.com/Ahlyx)
